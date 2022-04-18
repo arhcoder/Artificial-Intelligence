@@ -5,8 +5,8 @@ import random
 '''
 
 ''' MODEL PARAMETERS '''
-population: int = 200
-generations: int = 400
+population: int = 1000
+generations: int = 1000
 mutationProbability: float = 1.0
 crossoverProbability: float = 1.0
 
