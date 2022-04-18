@@ -38,7 +38,7 @@ Tolls = [
     [ 12, 10, 28, 68, 54, 0  ]
 ]
 
-bestSolution = []
+king = []
 
 
 
@@ -118,22 +118,11 @@ def rate(solution):
         objective function of a
         multiobjective optimization
         problem, and returns it...
-
-        It returns a list with three
-        elements:
-
-            * 0: finalCost;
-            * 1: distanceCost;
-            * 2: tollsCost;
-        
-        It is to avoid using extra
-        executions when it shows the
-        results of each generation...
     '''
 
     costs = tour(solution)
 
-    return [(costs[0] * roadsDistancesPorcentualImportance) + (costs[1] * tollsCostPorcentualImportance), costs[0], costs[1]]
+    return (costs[0] * roadsDistancesPorcentualImportance) + (costs[1] * tollsCostPorcentualImportance)
 
 
 
@@ -155,7 +144,7 @@ def best(solutions):
 
     for currentSolution in range(1, population):
         currentRate: int = rate(solutions[currentSolution])
-        if currentRate > highestRate:
+        if currentRate < highestRate:
             bestSolution = solutions[currentSolution]
             highestRate = currentRate
         
@@ -187,7 +176,7 @@ def mutate(solution):
 
 
 ''' Crossover '''
-def cross(first, second):
+def crossover(first, second):
 
     '''
         It recieves a couple of solutions
@@ -207,7 +196,64 @@ def cross(first, second):
 
 
 
+''' Simulation point '''
+def simulation():
 
+    '''
+        Recreate the sumulation a prints the results of it...
+    '''
+
+    # Print the model parameters #
+    print("\n\n" + 94 * "═" + "\n\n PROBLEMA \"TSP\" MEDIANTE ALGORITMO GENÉTICO \n\n" + 94 * "═" + "\n")
+    print(f"* Ciudades: {cities};")
+    print(f"* Población: {population};")
+    print(f"* Generaciones: {generations};")
+    print(f"* Probabilidad de mutación: {mutationProbability * 100}%;")
+    print(f"* Probabilidad de emparejamiento: {crossoverProbability * 100}%;\n\n" + 94 * "═")
+    print("\n  GENERACIÓN \t\t\tMEJOR SOLUCIÓN\t\tCOSTO\n\n" + 94 * "═" + "\n")
+    
+    solutions = generateSolutions()
+
+    king = solutions[0]
+
+    for generation in range(generations):
+
+        for _ in range(generations // 2):
+
+            # If it will be a cross #
+            if random.uniform(0, 1) <= crossoverProbability:
+
+                firstSolutionIndex, secondSolutionIndex = random.sample(range(population), 2)
+                firstSolution = solutions[firstSolutionIndex]
+                secondSolution = solutions[secondSolutionIndex]
+                cross = crossover(firstSolution, secondSolution)
+
+                # If it will be a mutation #
+                if random.uniform(0, 1) <= mutationProbability:
+
+                    mutate(cross)
+                    parentCost: int = rate(firstSolution)
+                    crossCost: int = rate(cross)
+
+                    # It decides if the mutated cross survive
+                    # to the next generation, suppling his
+                    # parent space on the solutions...
+                    if crossCost <= parentCost:
+                        solutions[firstSolutionIndex] = cross
+
+        # Gets the best member on the generation #
+        strong = best(solutions)
+        strongRate = rate(strong)
+
+        # Update the best member on whole the history #
+        if rate(strong) <= rate(king):
+            king = strong
+
+        print(f"      {generation + 1:02d}\t\t{strong}\t\t{strongRate}")
+    
+    print("\n" + 94 * "═" + "\n")
+    print(f"SOLUCIÓN: {king}: {rate(king)};")
+    print("\n" + 94 * "═" + "\n\n")
 
 
 
@@ -221,13 +267,16 @@ if __name__ == "__main__":
     #     [10, 12, 0, 20],
     #     [30, 4, 20, 0]
     # ]
+
     # rate(graph, [0, 1, 3, 2, 0])
     # print(tour([2, 1, 4, 5, 3, 0, 2]))
     # print(rate([2, 1, 4, 5, 3, 0, 2]))
     # print(mutate([2, 1, 4, 5, 3, 0, 2]))
-    # print(cross([2, 1, 4, 5, 3, 0, 2], [4, 0, 3, 1, 5, 2, 4]))
+    # print(crossover([2, 1, 4, 5, 3, 0, 2], [4, 0, 3, 1, 5, 2, 4]))
 
-    solutions = generateSolutions()
-    for solution in solutions:
-        costs = rate(solution)
-        print(f"{solution}: {costs[0]:02f};\t{costs[1]:02f};\t{costs[2]:02f};\t")
+    # solutions = generateSolutions()
+    # for solution in solutions:
+    #     costs = rate(solution)
+    #    print(f"{solution}: {costs[0]:02f};\t{costs[1]:02f};\t{costs[2]:02f};\t")
+
+    simulation()
