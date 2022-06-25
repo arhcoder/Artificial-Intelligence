@@ -1,7 +1,57 @@
 import random
+import csv
+
+import matplotlib.pyplot as plt
+import numpy as np
+import networkx as nx
+
+
 
 '''
-
+    ╔═══════════════════════════════════════════════════════════╗
+    ║                                                           ║
+    ║      GENETIC ALGORITHM TO SOLVE THE "TSP" PROBLEM         ║
+    ║                                                           ║
+    ╚═══════════════════════════════════════════════════════════╝
+    ╔═══════════════════════════════════════════════════════════╗
+    ║                                                           ║
+    ║  It uses the parameters:                                  ║
+    ║                                                           ║
+    ║      * members: Population size;                          ║
+    ║      * generations: Amount of simulated generations;      ║
+    ║      * mutationProbability: Between 0.0 and 1.0;          ║
+    ║      * coupleProbability: Betweeen 0.0 and 0.0 and 1.0;   ║
+    ║       * cities: Amount of cities of the problem;          ║
+    ║                                                           ║
+    ║   This algorithm recieves (plus the model parameters),    ║
+    ║   two network graphs as adjacency matrices that           ║
+    ║   represents:                                             ║
+    ║                                                           ║
+    ║       * Distances between each city.                      ║
+    ║       * Tolls to pay in each road of the cities.          ║
+    ║                                                           ║
+    ║   Using these and two more parameters (processed like     ║
+    ║   multiobjective optimization functions):                 ║
+    ║                                                           ║
+    ║       * roadsDistancesPorcentualImportance;               ║
+    ║       * tollsCostPorcentualImportance;                    ║
+    ║                                                           ║
+    ║   Both with 100% relation; generates a random population  ║
+    ║   of solutions (set of numbers between [0 cities - 1] of  ║
+    ║   size "cities + 1", that no repeats numbers, expecting   ║
+    ║   the first (it is repeated at the end of the set):       ║
+    ║   [1, 4, 8, 5, 3, 7, 6, 0, 2, 1];) and; in each           ║
+    ║   generation, mutate and cross some of them to improve    ║
+    ║   them; extracting the best solution on each generation,  ║
+    ║   and the best on whole the population history.           ║
+    ║                                                           ║
+    ╚═══════════════════════════════════════════════════════════╝
+    ╔═══════════════════════════════════════════════════════════╗
+    ║  Last update: April 18th, 2022;                           ║
+    ╚═══════════════════════════════════════════════════════════╝
+    ╔═══════════════════════════════════════════════════════════╗
+    ║  @arhcoder                                                ║
+    ╚═══════════════════════════════════════════════════════════╝
 '''
 
 ''' MODEL PARAMETERS '''
@@ -18,55 +68,45 @@ tollsCostPorcentualImportance: float = 0.32
 cities = 20
 
 
-''''''
-Roads = [
-    [ 49, 28, 82, 25, 75, 24, 87, 57, 83, 11, 54, 72, 12, 55, 34,  8, 22, 59, 58, 38 ],
-    [ 28, 87, 38, 27, 23, 46, 25, 88, 19,  9, 86, 39, 76, 11,  8, 78, 59, 68,  8, 35 ],
-    [ 82, 38, 16, 13, 56, 51, 29, 46, 30, 63, 86, 45, 53, 59, 39, 32, 87, 81, 41, 50 ],
-    [ 25, 27, 13, 18, 21, 54, 47, 20, 27, 28, 40, 54, 85, 15, 35, 59, 33, 30, 16, 34 ],
-    [ 75, 23, 56, 21, 36, 42, 82, 37, 28, 60,  8, 80, 56, 14, 14, 82, 83, 10, 71, 21 ],
-    [ 24, 46, 51, 54, 42, 52, 72, 65, 21, 75, 73, 27, 11, 60, 50, 29, 25, 30, 56, 30 ],
-    [ 87, 25, 29, 47, 82, 72, 48, 42, 54, 57, 19, 82, 14, 84, 66, 46, 36, 27, 41, 16 ],
-    [ 57, 88, 46, 20, 37, 65, 42, 57, 61, 34, 40, 13, 60, 53, 40, 43, 45, 43, 31, 56 ],
-    [ 83, 19, 30, 27, 28, 21, 54, 61, 18, 85, 13, 43, 26, 83, 81, 69, 28, 66, 28, 73 ],
-    [ 11,  9, 63, 28, 60, 75, 57, 34, 85, 14, 42, 87, 19, 70, 69, 83, 59, 56, 11, 46 ],
-    [ 54, 86, 86, 40,  8, 73, 19, 40, 13, 42, 20, 82, 35, 65, 76, 14, 37, 63, 39, 50 ],
-    [ 72, 39, 45, 54, 80, 27, 82, 13, 43, 87, 82, 24, 57, 75, 62, 19, 16, 53, 84, 66 ],
-    [ 12, 76, 53, 85, 56, 11, 14, 60, 26, 19, 35, 57, 12, 43, 57, 33, 72, 35,  8,  9 ],
-    [ 55, 11, 59, 15, 14, 60, 84, 53, 83, 70, 65, 75, 43, 67, 10, 79, 21, 68, 82, 29 ],
-    [ 34,  8, 39, 35, 14, 50, 66, 40, 81, 69, 76, 62, 57, 10, 80, 46,  9, 27, 62, 29 ],
-    [ 8,  78, 32, 59, 82, 29, 46, 43, 69, 83, 14, 19, 33, 79, 46, 36, 18, 26, 80, 23 ],
-    [ 22, 59, 87, 33, 83, 25, 36, 45, 28, 59, 37, 16, 72, 21,  9, 18, 73, 24, 30, 68 ],
-    [ 59, 68, 81, 30, 10, 30, 27, 43, 66, 56, 63, 53, 35, 68, 27, 26, 24, 57, 77, 71 ],
-    [ 58,  8, 41, 16, 71, 56, 41, 31, 28, 11, 39, 84,  8, 82, 62, 80, 30, 77, 15, 38 ],
-    [ 38, 35, 50, 34, 21, 30, 16, 56, 73, 46, 50, 66,  9, 29, 29, 23, 68, 71, 38, 80 ]
-]
+''' ADJACENCY MATRIX OF ROADS DISTANCES BETWEEN CITIES '''
 
-''''''
-Tolls = [
-    [ 17,  4, 31, 20, 32, 29,  7, 11, 19,  3,  8, 23, 22,  1, 10, 14, 32, 14,  0, 24 ],
-    [  4,  2,  3, 33, 32, 28, 33, 11, 31, 13, 25, 18, 11, 26, 11, 33, 30, 10, 28, 28 ],
-    [ 31,  3, 27,  7,  1,  2, 13, 12, 14,  4, 24,  9, 31,  7,  4, 31,  5, 27,  8, 31 ],
-    [ 20, 33,  7, 33, 23, 15, 33, 13, 27, 30, 29, 12, 15, 31, 28, 21, 12, 17, 14, 21 ],
-    [ 32, 32,  1, 23, 33,  4, 11,  3, 12, 24,  4, 19, 24, 22,  9, 22, 33, 11, 11, 33 ],
-    [ 29, 28,  2, 15,  4, 26, 11,  4, 13, 11,  5,  8, 26, 11, 17, 11,  5,  4, 27, 26 ],
-    [  7, 33, 13, 33, 11, 11,  7, 22,  5,  3,  1, 23, 14, 19, 30,  0, 18,  6, 19, 32 ],
-    [ 11, 11, 12, 13,  3,  4, 22, 29, 31,  0, 15, 22, 33, 12, 12, 25, 22, 14, 27, 20 ],
-    [ 19, 31, 14, 27, 12, 13,  5, 31,  3,  0,  2, 26,  7, 28, 33, 27, 33, 16,  2,  2 ],
-    [  3, 13,  4, 30, 24, 11,  3,  0,  0,  4,  6, 31, 10, 17, 11, 29, 11, 18,  6,  0 ],
-    [  8, 25, 24, 29,  4,  5,  1, 15,  2,  6, 11, 20,  9, 17, 25, 23, 18, 19, 17,  5 ],
-    [ 23, 18,  9, 12, 19,  8, 23, 22, 26, 31, 20, 29,  6, 11, 31,  9,  5, 23,  9,  2 ],
-    [ 22, 11, 31, 15, 24, 26, 14, 33,  7, 10,  9,  6,  5,  5,  4, 31,  4, 28, 11, 20 ],
-    [  1, 26,  7, 31, 22, 11, 19, 12, 28, 17, 17, 11,  5,  7,  3,  4,  1, 30, 21,  0 ],
-    [ 10, 11,  4, 28,  9, 17, 30, 12, 33, 11, 25, 31,  4,  3, 12, 17, 27, 18,  1, 30 ],
-    [ 14, 33, 31, 21, 22, 11,  0, 25, 27, 29, 23,  9, 31,  4, 17, 19, 27, 10, 23, 11 ],
-    [ 32, 30,  5, 12, 33,  5, 18, 22, 33, 11, 18,  5,  4,  1, 27, 27, 16,  0, 18, 31 ],
-    [ 14, 10, 27, 17, 11,  4,  6, 14, 16, 18, 19, 23, 28, 30, 18, 10,  0,  4,  8, 20 ],
-    [  0, 28,  8, 14, 11, 27, 19, 27,  2,  6, 17,  9, 11, 21,  1, 23, 18,  8, 24, 32 ],
-    [ 24, 28, 31, 21, 33, 26, 32, 20,  2,  0,  5,  2, 20,  0, 30, 11, 31, 20, 32, 24 ]
-]
+# Takes the matrix from TSP/Roads.csv #
+Roads = []
+with open("TSP/Roads.csv", "r", newline = "") as file:
+    myreader = csv.reader(file, delimiter = ",")
+    for rows in myreader:
+        Roads.append(rows)
 
+# It convert to int matrix in case that it takes as string matrix #
+for n, i in enumerate(Roads):
+    for k, j in enumerate(i):
+        Roads[n][k] = int(j)
+
+
+''' ADJACENCY MATRIX OF TOLLS COSTS IN EACH ROAD '''
+
+# Taken from TSP/Tolls.csv #
+Tolls = []
+with open("TSP/Tolls.csv", "r", newline = "") as file:
+    myreader = csv.reader(file, delimiter = ",")
+    for rows in myreader:
+        Tolls.append(rows)
+
+# It convert to int matrix in case that it takes as string matrix #
+for n, i in enumerate(Tolls):
+    for k, j in enumerate(i):
+        Tolls[n][k] = int(j)
+
+
+# df = pd.DataFrame(Roads)
+# df.to_csv("MyRoads.csv")
+
+
+
+
+''' BEST SOLUTION ON WHOLE THE SIMULATION '''
 king = []
+
 
 
 
@@ -231,6 +271,17 @@ def simulation():
         Recreate the sumulation a prints the results of it...
     '''
 
+
+    # It exports the local matrix to csv files... #
+    # with open("TSP/Roads.csv", "w", newline = "") as file:
+    #     mywriter = csv.writer(file, delimiter = ",")
+    #     mywriter.writerows(Roads)
+    
+    # with open("TSP/Tolls.csv", "w", newline = "") as file:
+    #     mywriter = csv.writer(file, delimiter = ",")
+    #     mywriter.writerows(Tolls)
+
+
     # Print the model parameters #
     print("\n\n" + 133 * "═" + "\n\n PROBLEMA \"TSP\" MEDIANTE ALGORITMO GENÉTICO \n\n" + 133 * "═" + "\n")
     print(f"* Ciudades: {cities};")
@@ -242,6 +293,7 @@ def simulation():
     
     solutions = generateSolutions()
 
+    global king
     king = solutions[0]
 
     for generation in range(generations):
@@ -285,6 +337,43 @@ def simulation():
 
 
 
+
+''' Graphics generation '''
+def generateGraph():
+
+    '''
+        Generates a graphic based on the roads graph
+        drawing also the best path founded...
+    '''
+
+    # Draws the matrix #
+    NumpyMatrix = np.array(Roads)
+    Graph = nx.from_numpy_matrix(NumpyMatrix)
+    Position = nx.spring_layout(Graph)
+    nx.draw_networkx(Graph, pos = Position, node_color = "#50A8FA", node_size = 400, edge_color = "#08080866")
+    # nx.draw_networkx_nodes(Graph, pos = Position, node_color = "#8B4DFF")
+    # nx.draw_networkx_edges(Graph, pos = Position, alpha = 0.4)
+
+    # Converts the king solution into a tuple of nodes #
+    global king
+    path = []
+    for node in range(len(king) - 1):
+        path.append((king[node], king[node + 1]))
+
+    # Draws the path #
+    Path = nx.DiGraph(Graph)
+    nx.draw_networkx_edges(Path, pos = Position, edgelist = path, width = 1.4, edge_color = "red")
+
+    # Generates the graphic #
+    manager = plt.get_current_fig_manager()
+    manager.resize(*manager.window.maxsize())
+    plt.title("TSP: Camino más corto encontrado")
+    plt.savefig("TSP/Graph.png")
+    plt.show()
+
+
+
+
 ''' Entry point '''
 if __name__ == "__main__":
 
@@ -308,3 +397,4 @@ if __name__ == "__main__":
     #    print(f"{solution}: {costs[0]:02f};\t{costs[1]:02f};\t{costs[2]:02f};\t")
 
     simulation()
+    generateGraph()
