@@ -2,8 +2,8 @@ import random
 import csv
 
 import matplotlib.pyplot as plt
-import numpy as np
 import networkx as nx
+import numpy as np
 
 
 
@@ -47,7 +47,7 @@ import networkx as nx
     ║                                                           ║
     ╚═══════════════════════════════════════════════════════════╝
     ╔═══════════════════════════════════════════════════════════╗
-    ║  Last update: April 18th, 2022;                           ║
+    ║  Last update: June 24th, 2022;                            ║
     ╚═══════════════════════════════════════════════════════════╝
     ╔═══════════════════════════════════════════════════════════╗
     ║  @arhcoder                                                ║
@@ -55,8 +55,8 @@ import networkx as nx
 '''
 
 ''' MODEL PARAMETERS '''
-population: int = 1000
-generations: int = 1000
+population: int = 100
+generations: int = 100
 mutationProbability: float = 1.0
 crossoverProbability: float = 1.0
 
