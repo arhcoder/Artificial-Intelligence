@@ -1,0 +1,7 @@
+Task	Google Drive Folder Link	File ID
+Whole dataset	Google Drive Folder	14DulzxuH5TDhXtviRVXsH5e2JTY2POLi
+Subtask A	Google Drive Folder	1CAbb3DjrOPBNm0ozVBfhvrEh9P9rAppc
+Subtask B	Google Drive Folder	11YeloR2eTXcTzdwI04Z-M2QVvIeQAU6-
+Subtask C	Google Drive Folder	16bRUuoeb_LxnCkcKM-ed6X6K5t_1C6mL
+
+gdown --folder https://drive.google.com/drive/folders/<file_id>
